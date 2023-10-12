@@ -3,7 +3,7 @@ import pandas as pd
 import openai
 
 # OpenAIのAPIキーを設定
-openai.api_key = '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'
+openai.api_key = "openai_key"
 
 def get_response_from_gpt4(prompt, df):
     df_str = df.to_string()
