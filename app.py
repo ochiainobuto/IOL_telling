@@ -35,6 +35,7 @@ if uploaded_file:
     sel1 = st.multiselect('比較データ項目', options = header_list)
     st.write(f'選択されたのは、{sel1}です。')
     new_df = df[sel1]
+    st.write(new_df)
 
     # GPT-4に問い合わせるプロンプトの入力
     user_input = st.text_area("Enter a prompt for GPT-4:")
