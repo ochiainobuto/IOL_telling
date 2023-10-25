@@ -27,8 +27,8 @@ llm=OpenAI(api_token=API_KEY)
 pandas_ai = PandasAI(
         llm,
         verbose=True,
-        enable_cache=False,
-        enforce_privacy=False,
+        enable_cache=True,
+        enforce_privacy=True,
         conversational=True,
         middlewares=[StreamlitMiddleware()],
     )
@@ -87,9 +87,9 @@ if uploaded_file:
         st.session_state.messages.append({"role": "user", "content": prompt})
 
         with st.chat_message("assistant"): # アシスタントの応答を表示するためのブロックを開始する
-            # response = pandas_ai.run(new_df, prompt=e_prompt)
+            response = pandas_ai.run(new_df, prompt=e_prompt)
                 
-            # jp_response = translate_to_japanese(response)
+            jp_response = translate_to_japanese(response)
             st.write(pandas_ai.run(new_df, prompt=e_prompt)) # 応答をStreamlitのチャットに表示する
                 
             plt.savefig('bar_plot.png')
