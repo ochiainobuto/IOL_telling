@@ -18,7 +18,7 @@ from pandasai.middlewares.streamlit import StreamlitMiddleware
 
 # OpenAIのAPIキーを設定
 API_KEY = st.secrets["openai_key"]
-openai.api_key = st.secrets["openai_key"]
+openai.api_key = API_KEY
 
 llm=OpenAI(api_token=API_KEY)
 
