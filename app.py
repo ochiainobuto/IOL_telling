@@ -27,7 +27,7 @@ llm=OpenAI(api_token=API_KEY)
 pandas_ai = PandasAI(
         llm,
         verbose=True,
-        enable_cache=True,
+        enable_cache=False,
         enforce_privacy=True,
         conversational=True,
         middlewares=[StreamlitMiddleware()],
