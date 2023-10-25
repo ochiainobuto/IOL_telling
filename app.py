@@ -77,7 +77,7 @@ if uploaded_file:
     # アプリの再実行の際に履歴のチャットメッセージを表示
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+            st.write(message["content"])
 
     if prompt := st.chat_input(): # Streamlit のチャット入力がある場合に実行する
         st.chat_message("user").markdown(prompt)
@@ -87,7 +87,7 @@ if uploaded_file:
         with st.chat_message("assistant"): # アシスタントの応答を表示するためのブロックを開始する
             response = pandas_ai.run(new_df, prompt=e_prompt)
             jp_response = translate_to_japanese(response)
-            st.markdown(jp_response) # 応答をStreamlitのチャットに表示する
+            st.write(jp_response) # 応答をStreamlitのチャットに表示する
 
         st.session_state.messages.append({"role": "assistant", "content": jp_response})
 
