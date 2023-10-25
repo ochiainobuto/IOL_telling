@@ -94,7 +94,7 @@ if uploaded_file:
                 st.image(im)
                 os.remove('temp_chart.png')
 
-            if x is not None:    
+            if response is not None:    
                 jp_response = translate_to_japanese(response)
                 st.write(pandas_ai.run(new_df, prompt=jp_response)) # 応答をStreamlitのチャットに表示する
                 
