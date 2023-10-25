@@ -89,17 +89,12 @@ if uploaded_file:
         with st.chat_message("assistant"): # アシスタントの応答を表示するためのブロックを開始する
             response = pandas_ai.run(new_df, prompt=e_prompt)
                 
-            # Save the plot as an image
-            buf = BytesIO()
-            ax.figure.savefig(buf, format='png')
-            st.image(buf)
-        
-            # Show the plot (optional)
-            st.pyplot()
-
             jp_response = translate_to_japanese(response)
             st.write(response) # 応答をStreamlitのチャットに表示する
-
+                
+            plt.savefig('bar_plot.png')
+            st.image('bar_plot.png')
+            
         st.session_state.messages.append({"role": "assistant", "content": response})
 
         #レスポンスをテキストファイルとしてダウンロード可能にする
