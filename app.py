@@ -6,6 +6,7 @@ from pandasai import PandasAI
 from pandasai.llm.openai import OpenAI
 from pandasai.middlewares.streamlit import StreamlitMiddleware
 import matplotlib.pyplot as plt
+import io
 
 # from pandasai import SmartDataframe
 # from pandasai.llm import OpenAI
