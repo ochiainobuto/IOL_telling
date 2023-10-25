@@ -86,10 +86,10 @@ if uploaded_file:
 
         with st.chat_message("assistant"): # アシスタントの応答を表示するためのブロックを開始する
             response = pandas_ai.run(new_df, prompt=e_prompt)
-            jp_response = translate_to_japanese(response)
-            st.write(jp_response) # 応答をStreamlitのチャットに表示する
+            # jp_response = translate_to_japanese(response)
+            st.write(response) # 応答をStreamlitのチャットに表示する
 
-        st.session_state.messages.append({"role": "assistant", "content": jp_response})
+        st.session_state.messages.append({"role": "assistant", "content": response})
 
         #レスポンスをテキストファイルとしてダウンロード可能にする
         # st.download_button(
