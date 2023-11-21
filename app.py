@@ -1,7 +1,9 @@
 import streamlit as st
 from streamlit_chat import message
 import os
-
+import matplotlib.collections
+import matplotlib.pyplot as plt
+import japanize_matplotlib
 
 # From here down is all the StreamLit UI.
 st.set_page_config(page_title="IOL telling", page_icon="📊")
@@ -47,7 +49,7 @@ if data:
     st.dataframe(df)
 
 def get_text():
-    input_text = st.text_input("You: ", "多焦点眼内レンズ挿入例の平均年齢は何歳か？", key="input")
+    input_text = st.text_input("You: ", "多焦点眼内レンズ挿入例における通常国民健康保険、選定療養、自費診療の割合をグラフで表示して", key="input")
     return input_text
 
 def get_state(): 
@@ -107,6 +109,15 @@ if ask_button:
                Input: {action.tool_input}\n
                Log: {action.log}\nResult: {result}\n
             """
+            if result is not None:
+                st.set_option('deprecation.showPyplotGlobalUse', False)
+                if isinstance(result, matplotlib.collections.PathCollection):                    
+                    st.pyplot()
+                elif isinstance(result, matplotlib.axes.Axes):
+                    st.pyplot()
+                else:
+                    st.write(result)
+
             text = re.sub(r'`[^`]+`', '', text)
             actions_list.append(text)
             
