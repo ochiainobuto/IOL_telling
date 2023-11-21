@@ -47,7 +47,7 @@ if data:
     st.dataframe(df)
 
 def get_text():
-    input_text = st.text_input("You: ", "Tell me the average of the revenue", key="input")
+    input_text = st.text_input("You: ", "多焦点眼内レンズ挿入例の平均年齢は何歳か？", key="input")
     return input_text
 
 def get_state(): 
