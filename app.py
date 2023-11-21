@@ -1,117 +1,128 @@
 import streamlit as st
-import pandas as pd
-import openai
-import json
-from pandasai import PandasAI
-from pandasai.llm.openai import OpenAI
-from pandasai.middlewares.streamlit import StreamlitMiddleware
-import matplotlib.pyplot as plt
+from streamlit_chat import message
 import os
 
-# from pandasai import SmartDataframe
-# from pandasai.llm import OpenAI
-# import matplotlib.pyplot as plt
-# import matplotlib.figure
 
-#pip install poetry
-#pip install pandasai
-#conda activate sdxl
-#pip install openpyxl
+# From here down is all the StreamLit UI.
+st.set_page_config(page_title="IOL telling", page_icon="📊")
+st.header("IOL telling")
+
+if "generated" not in st.session_state:
+    st.session_state["generated"] = []
+
+if "past" not in st.session_state:
+    st.session_state["past"] = []
+    
+    
+from langchain.agents import load_tools, initialize_agent, AgentType, Tool, tool
+from langchain.chat_models import ChatOpenAI
+from langchain.llms import OpenAI
+import pandas as pd
+# from langchain.agents import create_pandas_dataframe_agent
+from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
+
+from langchain.memory import ConversationBufferMemory
+from langchain import PromptTemplate
+from langchain.callbacks.base import BaseCallbackHandler
+from langchain.schema import (
+    HumanMessage,
+)
+from typing import Any, Dict, List
 
 # OpenAIのAPIキーを設定
 API_KEY = st.secrets["openai_key"]
-openai.api_key = API_KEY
+os.environ['OPENAI_API_KEY'] = API_KEY
 
-llm=OpenAI(api_token=API_KEY)
+df = pd.DataFrame([])
+data = st.file_uploader("", type="xlsx")
 
-pandas_ai = PandasAI(
-        llm,
-        verbose=True,
-        enable_cache=False,
-        enforce_privacy=True,
-        conversational=True,
-        middlewares=[StreamlitMiddleware()],
-    )
+# st.download_button(label='サンプルデータをダウンロードする',data='https://drive.google.com/file/d/1wuSx35y3-hjZew1XhrM78xlAGIDTd4fp/view?usp=drive_open',mime='text/csv')
 
-#st.session_stateの初期化
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+header_num = 0
+index_num = 0
+index_list = [i for i in range(index_num)]
 
-def translate_to_english(input_text):
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": f'以下を英訳してください。”{input_text}"'}
-        ]
-    )
-    return response['choices'][0]['message']['content']
+if data:
+    df = pd.read_excel(data, header=header_num, index_col=index_list)
+    st.dataframe(df)
 
-def translate_to_japanese(input_text):
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": f'以下を日本語訳してください。”{input_text}"'}
-        ]
-    )
-    return response['choices'][0]['message']['content']
+def get_text():
+    input_text = st.text_input("You: ", "Tell me the average of the revenue", key="input")
+    return input_text
 
-######Title##########################################################
-st.title('IOL telling')
+def get_state(): 
+     if "state" not in st.session_state: 
+         st.session_state.state = {"memory": ConversationBufferMemory(memory_key="chat_history")} 
+     return st.session_state.state 
+state = get_state()
 
-# エクセルファイルのアップロード
-uploaded_file = st.file_uploader("", type="xlsx")
+prompt = PromptTemplate(
+    input_variables=["chat_history","input"], 
+    template='Based on the following chat_history, Please reply to the question in format of markdown. history: {chat_history}. question: {input}'
+)
 
-if uploaded_file:
-    df = pd.read_excel(uploaded_file)
-    st.write("Excel Data")
-    st.write(df)
-
-    header_list = df.columns.tolist()
-    sel1 = st.multiselect('比較データ項目', options = header_list)
-    st.write(f'選択されたのは、{sel1}です。')
-    new_df = df[sel1]
-
-    if len(new_df) > 0:
-        st.write(new_df)
-
-    # アプリの再実行の際に履歴のチャットメッセージを表示
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.write(message["content"])
-
-    if prompt := st.chat_input(): # Streamlit のチャット入力がある場合に実行する
-        st.chat_message("user").markdown(prompt)
-        e_prompt=translate_to_english(prompt)
-        st.session_state.messages.append({"role": "user", "content": prompt})
-
-        with st.chat_message("assistant"): # アシスタントの応答を表示するためのブロックを開始する
-            response = pandas_ai.run(new_df, prompt=e_prompt)
-
-            if os.path.isfile('temp_chart.png'):
-                im = plt.imread('temp_chart.png')
-                st.image(im)
-                os.remove('temp_chart.png')
-
-            if response is not None:    
-                jp_response = translate_to_japanese(response)
-                st.write(pandas_ai.run(new_df, prompt=jp_response)) # 応答をStreamlitのチャットに表示する
-                
-            
-            
-        st.session_state.messages.append({"role": "assistant", "content": response})
-
-        #レスポンスをテキストファイルとしてダウンロード可能にする
-        # st.download_button(
-        #     label="Download Response",
-        #     data=json.dumps(st.session_state.messages),
-        #     file_name="gpt_response.txt",
-        #     mime="text/plain",
-        # )
-
-
-
-        
-
+class SimpleStreamlitCallbackHandler(BaseCallbackHandler):
+    """ Copied only streaming part from StreamlitCallbackHandler """
     
+    def __init__(self) -> None:
+        self.tokens_area = st.empty()
+        self.tokens_stream = ""
+        
+    def on_llm_new_token(self, token: str, **kwargs: Any) -> None:
+        """Run on new LLM token. Only available when streaming is enabled."""
+        self.tokens_stream += token
+        self.tokens_area.markdown(self.tokens_stream)
+
+ask_button = ""
+
+if df.shape[0] > 0:
+    agent = create_pandas_dataframe_agent(OpenAI(temperature=0, max_tokens=1000), df, memory=state['memory'], verbose=True, return_intermediate_steps=True)
+    user_input = get_text()
+    ask_button = st.button('ask')
+else:
+    pass
+
+language = st.selectbox('language',['日本語','English'])
+
+import json
+import re
+from collections import namedtuple
+AgentAction = namedtuple('AgentAction', ['tool', 'tool_input', 'log'])
+
+def format_action(action, result):
+    action_fields = '\n'.join([f"{field}: {getattr(action, field)}"+'\n' for field in action._fields])
+    return f"{action_fields}\nResult: {result}\n"
+
+if ask_button:
+    st.write("Input:", user_input)
+    with st.spinner('typing...'):
+        prefix = f'You are the best explainer. please answer in {language}. User: '
+        handler = SimpleStreamlitCallbackHandler()
+        response = agent({"input":user_input})
+        
+        actions = response['intermediate_steps']
+        actions_list = []
+        for action, result in actions:
+            text = f"""Tool: {action.tool}\n
+               Input: {action.tool_input}\n
+               Log: {action.log}\nResult: {result}\n
+            """
+            text = re.sub(r'`[^`]+`', '', text)
+            actions_list.append(text)
+            
+        answer = json.dumps(response['output'],ensure_ascii=False).replace('"', '')
+        if language == 'English':
+            with st.expander('ℹ️ Show details', expanded=False):
+                st.write('\n'.join(actions_list))
+        else:
+            with st.expander('ℹ️ 詳細を見る', expanded=False):
+                st.write('\n'.join(actions_list))
+            
+        st.session_state.past.append(user_input)
+        st.session_state.generated.append(answer)
+        
+if st.session_state["generated"]:
+    for i in range(len(st.session_state["generated"]) - 1, -1, -1):
+        message(st.session_state["generated"][i], key=str(i))
+        message(st.session_state["past"][i], is_user=True, key=str(i) + "_user")
+        # message(st.session_state["past"][i], is_user=True, key=str(i) + "_user", avatar_style="thumbs")
