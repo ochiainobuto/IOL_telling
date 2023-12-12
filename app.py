@@ -15,7 +15,7 @@ if "generated" not in st.session_state:
 if "past" not in st.session_state:
     st.session_state["past"] = []
     
-    
+import io
 from langchain.agents import load_tools, initialize_agent, AgentType, Tool, tool
 from langchain.chat_models import ChatOpenAI
 from langchain.llms import OpenAI
@@ -101,9 +101,13 @@ if ask_button:
         prefix = f'You are the best explainer. please answer in {language}. User: '
         handler = SimpleStreamlitCallbackHandler()
         response = agent({"input":user_input})
-        
+        answer = json.dumps(response['output'],ensure_ascii=False).replace('"', '')
+
         actions = response['intermediate_steps']
         actions_list = []
+
+        st.session_state.past.append(user_input)
+        
         for action, result in actions:
             text = f"""Tool: {action.tool}\n
                Input: {action.tool_input}\n
@@ -111,17 +115,48 @@ if ask_button:
             """
             if result is not None:
                 st.set_option('deprecation.showPyplotGlobalUse', False)
+                print(">>>>>>>>>>",result)
                 if isinstance(result, matplotlib.collections.PathCollection):                    
-                    st.pyplot()
+                    st.pyplot(clear_figure=False)
+
+                    # グラフをバイトストリームとして保存
+                    buf = io.BytesIO()
+                    plt.savefig(buf, format='png')
+                    buf.seek(0)
+
+                    # ダウンロードボタンを作成
+                    st.download_button(
+                        label="このグラフをダウンロード",
+                        data=buf,
+                        file_name="plot.png",
+                        mime="image/png"
+                    )
+                    st.session_state.generated.append(buf.getvalue())
+
                 elif isinstance(result, matplotlib.axes.Axes):
-                    st.pyplot()
+                    st.pyplot(clear_figure=False)
+
+                    # グラフをバイトストリームとして保存
+                    buf = io.BytesIO()
+                    plt.savefig(buf, format='png')
+                    buf.seek(0)
+
+                    # ダウンロードボタンを作成
+                    st.download_button(
+                        label="このグラフをダウンロード",
+                        data=buf,
+                        file_name="plot.png",
+                        mime="image/png"
+                    )
+                    st.session_state.generated.append(buf.getvalue())
                 else:
                     st.write(result)
+                    st.session_state.generated.append(answer)
 
             text = re.sub(r'`[^`]+`', '', text)
             actions_list.append(text)
             
-        answer = json.dumps(response['output'],ensure_ascii=False).replace('"', '')
+        
         if language == 'English':
             with st.expander('ℹ️ Show details', expanded=False):
                 st.write('\n'.join(actions_list))
@@ -129,11 +164,22 @@ if ask_button:
             with st.expander('ℹ️ 詳細を見る', expanded=False):
                 st.write('\n'.join(actions_list))
             
-        st.session_state.past.append(user_input)
-        st.session_state.generated.append(answer)
+        # st.session_state.past.append(user_input)
+        # st.session_state.generated.append(answer)
         
 if st.session_state["generated"]:
     for i in range(len(st.session_state["generated"]) - 1, -1, -1):
-        message(st.session_state["generated"][i], key=str(i))
+        try:
+            st.image(st.session_state["generated"][i], caption=f"Graph {i + 1}")
+            # ダウンロードボタンを作成
+            # st.download_button(
+            #     label="このグラフをダウンロード",
+            #     data=st.session_state["generated"][i],
+            #     file_name="plot.png",
+            #     mime="image/png"
+            # )
+        except:
+            message(st.session_state["generated"][i], key=str(i))
+    
         message(st.session_state["past"][i], is_user=True, key=str(i) + "_user")
         # message(st.session_state["past"][i], is_user=True, key=str(i) + "_user", avatar_style="thumbs")
