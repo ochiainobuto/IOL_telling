@@ -106,7 +106,7 @@ if ask_button:
         actions = response['intermediate_steps']
         actions_list = []
 
-        st.session_state.past.append(user_input)
+        #st.session_state.past.append(user_input)
         
         for action, result in actions:
             text = f"""Tool: {action.tool}\n
