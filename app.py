@@ -49,7 +49,7 @@ if data:
     st.dataframe(df)
 
 def get_text():
-    input_text = st.text_input("You: ", "多焦点眼内レンズ挿入例における通常国民健康保険、選定療養、自費診療の割合をグラフで表示して", key="input")
+    input_text = st.text_input("You: ", "メーカーの分布を円グラフで表示して", key="input")
     return input_text
 
 def get_state(): 
