@@ -131,7 +131,7 @@ if ask_button:
                         file_name="plot.png",
                         mime="image/png"
                     )
-                    st.session_state.generated.append(buf.getvalue())
+                    #st.session_state.generated.append(buf.getvalue())
 
                 elif isinstance(result, matplotlib.axes.Axes):
                     st.pyplot(clear_figure=False)
@@ -148,15 +148,14 @@ if ask_button:
                         file_name="plot.png",
                         mime="image/png"
                     )
-                    st.session_state.generated.append(buf.getvalue())
+                    #st.session_state.generated.append(buf.getvalue())
                 else:
                     st.write(result)
-                    st.session_state.generated.append(answer)
+                    #st.session_state.generated.append(answer)
 
             text = re.sub(r'`[^`]+`', '', text)
             actions_list.append(text)
             
-        
         if language == 'English':
             with st.expander('ℹ️ Show details', expanded=False):
                 st.write('\n'.join(actions_list))
@@ -164,22 +163,22 @@ if ask_button:
             with st.expander('ℹ️ 詳細を見る', expanded=False):
                 st.write('\n'.join(actions_list))
             
-        # st.session_state.past.append(user_input)
-        # st.session_state.generated.append(answer)
+        st.session_state.past.append(user_input)
+        st.session_state.generated.append(answer)
         
 if st.session_state["generated"]:
     for i in range(len(st.session_state["generated"]) - 1, -1, -1):
-        try:
-            st.image(st.session_state["generated"][i], caption=f"Graph {i + 1}")
-            # ダウンロードボタンを作成
-            # st.download_button(
-            #     label="このグラフをダウンロード",
-            #     data=st.session_state["generated"][i],
-            #     file_name="plot.png",
-            #     mime="image/png"
-            # )
-        except:
-            message(st.session_state["generated"][i], key=str(i))
-    
+        # try:
+        #     st.image(st.session_state["generated"][i], caption=f"Graph {i + 1}")
+        #     # ダウンロードボタンを作成
+        #     # st.download_button(
+        #     #     label="このグラフをダウンロード",
+        #     #     data=st.session_state["generated"][i],
+        #     #     file_name="plot.png",
+        #     #     mime="image/png"
+        #     # )
+        # except:
+        #     message(st.session_state["generated"][i], key=str(i))
+        message(st.session_state["generated"][i], key=str(i))
         message(st.session_state["past"][i], is_user=True, key=str(i) + "_user")
         # message(st.session_state["past"][i], is_user=True, key=str(i) + "_user", avatar_style="thumbs")
