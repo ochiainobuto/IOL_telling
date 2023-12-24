@@ -105,10 +105,12 @@ if ask_button:
 
         actions = response['intermediate_steps']
         actions_list = []
+        ploted = False
 
-        #st.session_state.past.append(user_input)
+        # st.session_state.past.append(user_input)
         
-        for action, result in actions:
+        for idx, (action, result) in enumerate(actions):
+            print("idx: ", idx)
             text = f"""Tool: {action.tool}\n
                Input: {action.tool_input}\n
                Log: {action.log}\nResult: {result}\n
@@ -116,42 +118,48 @@ if ask_button:
             if result is not None:
                 st.set_option('deprecation.showPyplotGlobalUse', False)
                 print(">>>>>>>>>>",result)
-                if isinstance(result, matplotlib.collections.PathCollection):                    
-                    st.pyplot(clear_figure=False)
+                if isinstance(result, matplotlib.collections.PathCollection):   
+                    print("plotA") 
+                    if ploted == False:                
+                        st.pyplot(clear_figure=False)
+                        ploted = True
 
-                    # グラフをバイトストリームとして保存
-                    buf = io.BytesIO()
-                    plt.savefig(buf, format='png')
-                    buf.seek(0)
+                        # グラフをバイトストリームとして保存
+                        buf = io.BytesIO()
+                        buf.seek(0)
 
-                    # ダウンロードボタンを作成
-                    st.download_button(
-                        label="このグラフをダウンロード",
-                        data=buf,
-                        file_name="plot.png",
-                        mime="image/png"
-                    )
-                    #st.session_state.generated.append(buf.getvalue())
+                        # ダウンロードボタンを作成
+                        st.download_button(key=f"download_button1_{idx}", 
+                            label="このグラフをダウンロード",
+                            data=buf,
+                            file_name="plot.png",
+                            mime="image/png"
+                        )
+                        # st.session_state.generated.append(buf.getvalue())
 
                 elif isinstance(result, matplotlib.axes.Axes):
-                    st.pyplot(clear_figure=False)
+                    print("plotB")
+                    if ploted == False:                
+                        st.pyplot(clear_figure=False)
+                        ploted = True
 
-                    # グラフをバイトストリームとして保存
-                    buf = io.BytesIO()
-                    plt.savefig(buf, format='png')
-                    buf.seek(0)
+                        # # グラフをバイトストリームとして保存
+                        buf = io.BytesIO()
+                        buf.seek(0)
 
-                    # ダウンロードボタンを作成
-                    st.download_button(
-                        label="このグラフをダウンロード",
-                        data=buf,
-                        file_name="plot.png",
-                        mime="image/png"
-                    )
-                    #st.session_state.generated.append(buf.getvalue())
+                        # ダウンロードボタンを作成
+                        st.download_button(key=f"download_button2_{idx}", 
+                            label="このグラフをダウンロード",
+                            data=buf,
+                            file_name="plot.png",
+                            mime="image/png"
+                        )
+                        # st.session_state.generated.append(buf.getvalue())
                 else:
-                    st.write(result)
-                    #st.session_state.generated.append(answer)
+                    print("plotC")
+                    if ploted == False: 
+                        st.write(result)
+                        # st.session_state.generated.append(answer)
 
             text = re.sub(r'`[^`]+`', '', text)
             actions_list.append(text)
@@ -168,17 +176,21 @@ if ask_button:
         
 if st.session_state["generated"]:
     for i in range(len(st.session_state["generated"]) - 1, -1, -1):
+        print("generated: ",len(st.session_state["generated"]))
+        print("past: ",len(st.session_state["past"]))
+
         # try:
         #     st.image(st.session_state["generated"][i], caption=f"Graph {i + 1}")
-        #     # ダウンロードボタンを作成
-        #     # st.download_button(
-        #     #     label="このグラフをダウンロード",
-        #     #     data=st.session_state["generated"][i],
-        #     #     file_name="plot.png",
-        #     #     mime="image/png"
-        #     # )
+            # ダウンロードボタンを作成
+            # st.download_button(
+            #     label="このグラフをダウンロード",
+            #     data=st.session_state["generated"][i],
+            #     file_name="plot.png",
+            #     mime="image/png"
+            # )
         # except:
         #     message(st.session_state["generated"][i], key=str(i))
+        
         message(st.session_state["generated"][i], key=str(i))
         message(st.session_state["past"][i], is_user=True, key=str(i) + "_user")
         # message(st.session_state["past"][i], is_user=True, key=str(i) + "_user", avatar_style="thumbs")
